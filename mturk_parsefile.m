@@ -10,11 +10,10 @@ function data = mturk_parsefile(filename)
         
         % field
         field = text{i_line}(1 : i_colon-2);
+        
         % value
         structvalue = text{i_line}(i_colon+2 : end);
         
-        % print
-        fprintf(['    "',field,'"\n']);
         % parse JSON
         structvalue = mturk_parsejson(structvalue);
         
