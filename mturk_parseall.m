@@ -1,8 +1,8 @@
-function alldata = mturk_parseall(pathname)
+function mturk_parseall(pathname)
     
     %% directories
     % dir files
-    allfiles = dir(pathname);
+    allfiles = dir([pathname,filesep,'*.txt']);
     
     % remove directories
     i_allfiles = 1;
@@ -15,39 +15,93 @@ function alldata = mturk_parseall(pathname)
     end
     nb_allfiles = length(allfiles);
     
-    %% individual data
-    alldata = {};
+    %% parse data
     
-    % parse files
     for i_allfiles = 1:nb_allfiles
-        % name
         filename = [pathname,filesep,allfiles(i_allfiles).name];
-        if exist([filename,'.mat'],'file')
-            % skip
-            fprintf(['mturk_parseall: file "%s" : %d / %d (skip)\n'],filename,i_allfiles,nb_allfiles);
-            load([filename,'.mat'],'data');
-            alldata{end+1} = data;
+        % SKIP
+        if exist([filename,'.parse.mat'],'file')
+            % print it
+            fprintf('mturk_parseall: parse file "%s" : %d / %d (skip) \n',filename,i_allfiles,nb_allfiles);
+        % PARSE
         else
             try
                 % print it
-                fprintf(['mturk_parseall: file "%s" : %d / %d\n'],filename,i_allfiles,nb_allfiles);
+                fprintf('mturk_parseall: parse file "%s" : %d / %d \n',filename,i_allfiles,nb_allfiles);
                 % read and parse
+                data = struct();
                 data = mturk_parsefile(filename);
                 % save
                 save([filename,'.mat'],'data');
-                alldata{end+1} = data;
             catch
-                fprintf('mturk_parseall: warning. "%s" not parsed',allfiles(i_allfiles).name);
+                % ERROR
+                % print
+                fprintf('mturk_parseall: WARNING. "%s" not parsed \n',allfiles(i_allfiles).name);
+                % mkdir
+                if ~exist([pathname,'_error'],'dir'); mkdir([pathname,'_error']); end
+                % move file
+                movefile(filename,[pathname,'_error',filesep,allfiles(i_allfiles).name]);
             end
         end
     end
+    fprintf('mturk_parseall: \n');
     
-    %% alldata
+    %% uncell data
+    for i_allfiles = 1:nb_allfiles
+        filename = [pathname,filesep,allfiles(i_allfiles).name];
+        % SKIP
+        if exist([filename,'.uncell.mat'],'file')
+            % print it
+            fprintf('mturk_parseall: UNCELL file "%s" : %d / %d (skip)\n',filename,i_allfiles,nb_allfiles);
+        elseif ~exist([filename,'.parse.mat'],'file')
+            % print it
+            fprintf('mturk_parseall: UNCELL file "%s" : %d / %d (not parsed)\n',filename,i_allfiles,nb_allfiles);
+        % UNCELL
+        else
+            try
+                % print it
+                fprintf('mturk_parseall: file "%s" : %d / %d \n',filename,i_allfiles,nb_allfiles);
+                % load
+                data = struct();
+                load([filename,'.parse.mat'],'data');
+                % read and parse
+                data = mturk_uncell(data);
+                % save
+                save([filename,'.uncell.mat'],'data');
+            catch
+                fprintf('mturk_parseall: warning. "%s" not uncelled \n',allfiles(i_allfiles).name);
+            end
+        end
+    end
+    fprintf('mturk_parseall: \n');
+    
+    %% concatenate data
+    % print
+    fprintf('mturk_parseall: concatenate uncelled files\n');
+    
+    % load
+    alldata = {};
+    for i_allfiles = 1:nb_allfiles
+        filename = [pathname,filesep,allfiles(i_allfiles).name];
+        % skip
+        if ~exist([filename,'.uncell.mat'],'file')
+            % print it
+            fprintf('mturk_parseall: file "%s" : %d / %d (not uncelled)\n',filename,i_allfiles,nb_allfiles);
+        % load
+        else
+            data = struct();
+            load([filename,'.uncell.mat'],'data');
+            alldata{end+1} = data;
+        end        
+    end
+    
     % concatenate
     alldata = mturk_concatall(alldata);
-    % uncell
-    alldata{i_allfiles} = mturk_uncell(alldata{i_allfiles});
+    
     % save
     save([pathname,filesep,'alldata.mat'],'alldata');
+
+    % print
+    fprintf('mturk_parseall: \n');
     
 end
