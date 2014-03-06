@@ -1,7 +1,6 @@
 function mturk_parseall(pathname)
     
     %% directories
-    pathname = '140304';
     % dir files
     allfiles = dir([pathname,filesep,'*.txt']);
     
@@ -32,9 +31,11 @@ function mturk_parseall(pathname)
                 data = struct();
                 data = mturk_parsefile(filename);
                 % save
-                save([filename,'parse.mat'],'data');
-            catch
+                save([filename,'.parse.mat'],'data');
+            catch err
                 % ERROR
+                % rethrow
+                rethrow(err);
                 % print
                 fprintf('mturk_parseall: WARNING. error while parsing "%s"\n',allfiles(i_allfiles).name);
                 % mkdir
@@ -76,6 +77,8 @@ function mturk_parseall(pathname)
     fprintf('mturk_parseall: \n');
     
     %% concatenate data
+    if nb_allfiles<2; return; end
+    
     % print
     fprintf('mturk_parseall: CONCAT all uncelled files\n');
     

@@ -55,9 +55,11 @@ function [value,json] = parse_value(json)
                 end
                 
             case 'n'
-                value = [];
-                if (length(json) >= 3)
+                value = nan;
+                if (length(json) >= 3) && strcmp(json(1:3),'ull')
                     json(1:3) = [];
+                elseif (length(json) >= 2) && strcmp(json(1:2),'an')
+                    json(1:2) = [];
                 else
                     ME = MException('json:parse_value',['Invalid NULL identifier: ' id json]);
                     ME.throw;
