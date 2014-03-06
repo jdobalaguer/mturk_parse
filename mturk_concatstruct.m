@@ -1,4 +1,5 @@
-function ret = mturk_concatstruct(s1,s2)
+function ret = mturk_concatstruct(dim,s1,s2)
+    
     u_field = fieldnames(s1);
      nb_fields = length(u_field);
     
@@ -9,10 +10,12 @@ function ret = mturk_concatstruct(s1,s2)
         v1 = s1.(this_field);
         v2 = s2.(this_field);
         % convert to cell
-        if ~iscell(v1); v1={v1}; end
-        if ~iscell(v2); v2={v2}; end
+        if ~strcmp(class(v1),class(v2))
+            if ~iscell(v1); v1={v1}; end
+            if ~iscell(v2); v2={v2}; end
+        end
         % concat values
-        v = [v1,v2];
+        v = cat(dim,v1,v2);
         % save value
         ret.(this_field) = v;
     end
